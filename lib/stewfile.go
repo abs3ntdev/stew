@@ -26,6 +26,7 @@ type PackageData struct {
 	Asset  string `json:"asset"`
 	Binary string `json:"binary"`
 	URL    string `json:"url"`
+	Host   string `json:"host"`
 }
 
 func readLockFileJSON(lockFilePath string) (LockFile, error) {

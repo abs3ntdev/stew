@@ -23,8 +23,20 @@ func main() {
 				Name:    "install",
 				Usage:   "Install a binary. The input can be a GitHub repo or a URL. [Ex: stew install marwanhawari/ppath]",
 				Aliases: []string{"i"},
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:  "host",
+						Usage: "specify the custom host",
+					},
+					&cli.StringFlag{
+						Name:  "host-type",
+						Usage: "specify the type of git host [Ex: gitea]",
+					},
+				},
 				Action: func(ctx context.Context, c *cli.Command) error {
-					cmd.Install(c.Args().Slice())
+					host := c.String("host")
+					hostType := c.String("host-type")
+					cmd.Install(host, hostType, c.Args().Slice())
 					return nil
 				},
 			},
@@ -32,8 +44,20 @@ func main() {
 				Name:    "search",
 				Usage:   "Search for a GitHub repo then browse the selected repo's releases and assets. [Ex: stew search ripgrep]",
 				Aliases: []string{"s"},
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:  "host",
+						Usage: "specify the custom host",
+					},
+					&cli.StringFlag{
+						Name:  "host-type",
+						Usage: "specify the type of git host [Ex: gitea]",
+					},
+				},
 				Action: func(ctx context.Context, c *cli.Command) error {
-					cmd.Search(c.Args().First())
+					host := c.String("host")
+					hostType := c.String("host-type")
+					cmd.Search(host, hostType, c.Args().First())
 					return nil
 				},
 			},
@@ -41,8 +65,20 @@ func main() {
 				Name:    "browse",
 				Usage:   "Browse the releases and assets from a GitHub repo. [Ex: stew browse marwanhawari/ppath]",
 				Aliases: []string{"b"},
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:  "host",
+						Usage: "specify the custom host",
+					},
+					&cli.StringFlag{
+						Name:  "type",
+						Usage: "specify the type of git host [Ex: gitea]",
+					},
+				},
 				Action: func(ctx context.Context, c *cli.Command) error {
-					cmd.Browse(c.Args().First())
+					host := c.String("host")
+					hostType := c.String("host-type")
+					cmd.Browse(host, hostType, c.Args().First())
 					return nil
 				},
 			},
@@ -129,7 +165,9 @@ func listInstalledBinaries(ctx context.Context, cmd *cli.Command) {
 		return
 	}
 	userOS, userArch, _, systemInfo, err := stew.Initialize()
-	stew.CatchAndExit(err)
+	if err != nil {
+		return
+	}
 
 	stewLockFilePath := systemInfo.StewLockFilePath
 

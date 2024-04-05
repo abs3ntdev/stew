@@ -20,7 +20,12 @@ var YellowColor = color.New(color.FgYellow, color.OpBold).Render
 var BoldColor = color.New(color.OpBold).Render
 
 // LoadingSpinner is a reusable loading spinner
-var LoadingSpinner = spinner.New(spinner.CharSets[9], 100*time.Millisecond, spinner.WithColor("cyan"), spinner.WithHiddenCursor(true))
+var LoadingSpinner = spinner.New(
+	spinner.CharSets[9],
+	100*time.Millisecond,
+	spinner.WithColor("cyan"),
+	spinner.WithHiddenCursor(true),
+)
 
 // RegexDarwin is a regular express for darwin systems
 var RegexDarwin = `(?i)(darwin|mac(os)?|apple|osx)`
@@ -42,6 +47,9 @@ var RegexGithub = `(?i)^[A-Za-z0-9\-]+\/[A-Za-z0-9\_\.\-]+(@.+)?$`
 
 // RegexGithubSearch is a regular express for valid GitHub search queries
 var RegexGithubSearch = `(?i)^[A-Za-z0-9\_\.\-\/]+$`
+
+// RegexGiteaSearch is a regular express for valid Gitea search queries
+var RegexGiteaSearch = `(?i)^[A-Za-z0-9\_\.\-\/]+$`
 
 // RegexURL is a regular express for valid URLs
 var RegexURL = `(http|ftp|https):\/\/([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:\/~+#-]*[\w@?^=%&\/~+#-])`

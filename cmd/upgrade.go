@@ -11,7 +11,6 @@ import (
 
 // Upgrade is executed when you run `stew upgrade`
 func Upgrade(upgradeAllCliFlag bool, binaryName string) {
-
 	userOS, userArch, _, systemInfo, err := stew.Initialize()
 	stew.CatchAndExit(err)
 
@@ -63,61 +62,133 @@ func upgradeOne(binaryName, userOS, userArch string, lockFile stew.LockFile, sys
 	owner := pkg.Owner
 	repo := pkg.Repo
 
-	sp.Start()
-	githubProject, err := stew.NewGithubProject(owner, repo)
-	sp.Stop()
-	if err != nil {
-		return err
-	}
-
-	// This will make sure that there are any tags at all
-	_, err = stew.GetGithubReleasesTags(githubProject)
-	if err != nil {
-		return err
-	}
-
-	// Get the latest tag
-	tagIndex := 0
-	tag := githubProject.Releases[tagIndex].TagName
-
-	if pkg.Tag == tag {
-		return stew.AlreadyInstalledLatestTagError{Tag: tag}
-	}
-
-	// Make sure there are any assets at all
-	releaseAssets, err := stew.GetGithubReleasesAssets(githubProject, tag)
-	if err != nil {
-		return err
-	}
-
-	asset, err := stew.DetectAsset(userOS, userArch, releaseAssets)
-	if err != nil {
-		return err
-	}
-	assetIndex, _ := stew.Contains(releaseAssets, asset)
-	downloadURL := githubProject.Releases[tagIndex].Assets[assetIndex].DownloadURL
-	downloadPath := filepath.Join(stewPkgPath, asset)
-	err = stew.DownloadFile(downloadPath, downloadURL)
-	if err != nil {
-		return err
-	}
-	fmt.Printf("✅ Downloaded %v to %v\n", constants.GreenColor(asset), constants.GreenColor(stewPkgPath))
-
-	_, err = stew.InstallBinary(downloadPath, repo, systemInfo, &lockFile, true)
-	if err != nil {
-		if err := os.RemoveAll(downloadPath); err != nil {
+	switch pkg.Source {
+	case "github":
+		sp.Start()
+		githubProject, err := stew.NewGithubProject(owner, repo)
+		sp.Stop()
+		if err != nil {
 			return err
 		}
-	}
 
-	lockFile.Packages[indexInLockFile].Tag = tag
-	lockFile.Packages[indexInLockFile].Asset = asset
-	lockFile.Packages[indexInLockFile].URL = downloadURL
-	if err := stew.WriteLockFileJSON(lockFile, stewLockFilePath); err != nil {
-		return err
-	}
+		// This will make sure that there are any tags at all
+		_, err = stew.GetGithubReleasesTags(githubProject)
+		if err != nil {
+			return err
+		}
 
-	fmt.Printf("✨ Successfully upgraded the %v binary from %v to %v\n", constants.GreenColor(pkg.Binary), constants.GreenColor(pkg.Tag), constants.GreenColor(tag))
+		// Get the latest tag
+		tagIndex := 0
+		tag := githubProject.Releases[tagIndex].TagName
+
+		if pkg.Tag == tag {
+			return stew.AlreadyInstalledLatestTagError{Tag: tag}
+		}
+
+		// Make sure there are any assets at all
+		releaseAssets, err := stew.GetGithubReleasesAssets(githubProject, tag)
+		if err != nil {
+			return err
+		}
+
+		asset, err := stew.DetectAsset(userOS, userArch, releaseAssets)
+		if err != nil {
+			return err
+		}
+		assetIndex, _ := stew.Contains(releaseAssets, asset)
+		downloadURL := githubProject.Releases[tagIndex].Assets[assetIndex].DownloadURL
+		downloadPath := filepath.Join(stewPkgPath, asset)
+		err = stew.DownloadFile(downloadPath, downloadURL)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("✅ Downloaded %v to %v\n", constants.GreenColor(asset), constants.GreenColor(stewPkgPath))
+
+		_, err = stew.InstallBinary(downloadPath, repo, systemInfo, &lockFile, true)
+		if err != nil {
+			if err := os.RemoveAll(downloadPath); err != nil {
+				return err
+			}
+		}
+
+		lockFile.Packages[indexInLockFile].Tag = tag
+		lockFile.Packages[indexInLockFile].Asset = asset
+		lockFile.Packages[indexInLockFile].URL = downloadURL
+		if err := stew.WriteLockFileJSON(lockFile, stewLockFilePath); err != nil {
+			return err
+		}
+
+		fmt.Printf(
+			"✨ Successfully upgraded the %v binary from %v to %v\n",
+			constants.GreenColor(pkg.Binary),
+			constants.GreenColor(pkg.Tag),
+			constants.GreenColor(tag),
+		)
+		return nil
+	case "gitea":
+		sp.Start()
+		giteaProject, err := stew.NewGiteaProject(pkg.Host, owner, repo)
+		sp.Stop()
+		if err != nil {
+			return err
+		}
+
+		// This will make sure that there are any tags at all
+		_, err = stew.GetGiteaReleasesTags(giteaProject)
+		if err != nil {
+			return err
+		}
+
+		// Get the latest tag
+		tagIndex := 0
+		tag := giteaProject.Releases[tagIndex].TagName
+
+		if pkg.Tag == tag {
+			return stew.AlreadyInstalledLatestTagError{Tag: tag}
+		}
+
+		// Make sure there are any assets at all
+		releaseAssets, err := stew.GetGiteaReleasesAssets(giteaProject, tag)
+		if err != nil {
+			return err
+		}
+
+		asset, err := stew.DetectAsset(userOS, userArch, releaseAssets)
+		if err != nil {
+			return err
+		}
+		assetIndex, _ := stew.Contains(releaseAssets, asset)
+		downloadURL := giteaProject.Releases[tagIndex].Assets[assetIndex].DownloadURL
+		downloadPath := filepath.Join(stewPkgPath, asset)
+		err = stew.DownloadFile(downloadPath, downloadURL)
+		if err != nil {
+			return err
+		}
+		fmt.Printf("✅ Downloaded %v to %v\n", constants.GreenColor(asset), constants.GreenColor(stewPkgPath))
+
+		_, err = stew.InstallBinary(downloadPath, repo, systemInfo, &lockFile, true)
+		if err != nil {
+			if err := os.RemoveAll(downloadPath); err != nil {
+				return err
+			}
+		}
+
+		lockFile.Packages[indexInLockFile].Tag = tag
+		lockFile.Packages[indexInLockFile].Asset = asset
+		lockFile.Packages[indexInLockFile].URL = downloadURL
+		if err := stew.WriteLockFileJSON(lockFile, stewLockFilePath); err != nil {
+			return err
+		}
+
+		fmt.Printf(
+			"✨ Successfully upgraded the %v binary from %v to %v\n",
+			constants.GreenColor(pkg.Binary),
+			constants.GreenColor(pkg.Tag),
+			constants.GreenColor(tag),
+		)
+		return nil
+
+	}
 	return nil
 }
 

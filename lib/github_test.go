@@ -557,9 +557,9 @@ func Test_darwinARMFallback(t *testing.T) {
 
 var testGithubSearchJSON, _ = getGithubSearchJSON("marwanhawari/ppath")
 
-var testGithubSearchReadJSON GithubSearch = GithubSearch{
+var testGithubSearchReadJSON RepoSearch = RepoSearch{
 	Count: 1,
-	Items: []GithubSearchResult{
+	Items: []RepoSearchResult
 		{
 			FullName:    "marwanhawari/ppath",
 			Stars:       7,
@@ -569,10 +569,10 @@ var testGithubSearchReadJSON GithubSearch = GithubSearch{
 	},
 }
 
-var testGithubSearch GithubSearch = GithubSearch{
+var testGithubSearch RepoSearch = RepoSearch{
 	SearchQuery: "marwanhawari/ppath",
 	Count:       1,
-	Items: []GithubSearchResult{
+	Items: []RepoSearchResult
 		{
 			FullName:    "marwanhawari/ppath",
 			Stars:       7,
@@ -624,7 +624,7 @@ func Test_readGithubSearchJSON(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    GithubSearch
+		want    RepoSearch
 		wantErr bool
 	}{
 		{
@@ -640,7 +640,7 @@ func Test_readGithubSearchJSON(t *testing.T) {
 			args: args{
 				jsonString: "",
 			},
-			want:    GithubSearch{},
+			want:    RepoSearch{},
 			wantErr: true,
 		},
 	}
@@ -665,7 +665,7 @@ func TestNewGithubSearch(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    GithubSearch
+		want    RepoSearch
 		wantErr bool
 	}{
 		{
@@ -681,7 +681,7 @@ func TestNewGithubSearch(t *testing.T) {
 			args: args{
 				searchQuery: "",
 			},
-			want:    GithubSearch{},
+			want:    RepoSearch{},
 			wantErr: true,
 		},
 	}
@@ -701,7 +701,7 @@ func TestNewGithubSearch(t *testing.T) {
 
 func TestFormatSearchResults(t *testing.T) {
 	type args struct {
-		ghSearch GithubSearch
+		ghSearch RepoSearch
 	}
 	tests := []struct {
 		name string

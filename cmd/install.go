@@ -11,7 +11,10 @@ import (
 )
 
 // Install is executed when you run `stew install`
-func Install(cliInputs []string) {
+func Install(host, hostType string, cliInputs []string) {
+	if hostType == "" {
+		hostType = "github"
+	}
 	var err error
 
 	userOS, userArch, _, systemInfo, err := stew.Initialize()
@@ -60,48 +63,109 @@ func Install(cliInputs []string) {
 		err = os.MkdirAll(stewTmpPath, 0755)
 		stew.CatchAndExit(err)
 
-		var githubProject stew.GithubProject
 		if parsedInput.IsGithubInput {
-			fmt.Println(constants.GreenColor(owner + "/" + repo))
-			sp.Start()
-			githubProject, err = stew.NewGithubProject(owner, repo)
-			sp.Stop()
-			stew.CatchAndExit(err)
-
-			// This will make sure that there are any tags at all
-			releaseTags, err := stew.GetGithubReleasesTags(githubProject)
-			stew.CatchAndExit(err)
-
-			if tag == "" || tag == "latest" {
-				tag = githubProject.Releases[0].TagName
-			}
-
-			// Need to make sure user input tag is in the tags
-			tagIndex, tagFound := stew.Contains(releaseTags, tag)
-			if !tagFound {
-				tag, err = stew.WarningPromptSelect(fmt.Sprintf("Could not find a release with the tag %v - please select a release:", constants.YellowColor(tag)), releaseTags)
+			switch hostType {
+			case "gitea":
+				fmt.Println(constants.GreenColor(owner + "/" + repo))
+				sp.Start()
+				giteaProject, err := stew.NewGiteaProject(host, owner, repo)
+				sp.Stop()
 				stew.CatchAndExit(err)
-				tagIndex, _ = stew.Contains(releaseTags, tag)
-			}
 
-			// Make sure there are any assets at all
-			releaseAssets, err := stew.GetGithubReleasesAssets(githubProject, tag)
-			stew.CatchAndExit(err)
-
-			if asset == "" {
-				asset, err = stew.DetectAsset(userOS, userArch, releaseAssets)
-			}
-			stew.CatchAndExit(err)
-
-			assetIndex, assetFound := stew.Contains(releaseAssets, asset)
-			if !assetFound {
-				asset, err = stew.WarningPromptSelect(fmt.Sprintf("Could not find the asset %v - please select an asset:", constants.YellowColor(asset)), releaseAssets)
+				// This will make sure that there are any tags at all
+				releaseTags, err := stew.GetGiteaReleasesTags(giteaProject)
 				stew.CatchAndExit(err)
-				assetIndex, _ = stew.Contains(releaseAssets, asset)
+
+				if tag == "" || tag == "latest" {
+					tag = giteaProject.Releases[0].TagName
+				}
+
+				// Need to make sure user input tag is in the tags
+				tagIndex, tagFound := stew.Contains(releaseTags, tag)
+				if !tagFound {
+					tag, err = stew.WarningPromptSelect(
+						fmt.Sprintf(
+							"Could not find a release with the tag %v - please select a release:",
+							constants.YellowColor(tag),
+						),
+						releaseTags,
+					)
+					stew.CatchAndExit(err)
+					tagIndex, _ = stew.Contains(releaseTags, tag)
+				}
+
+				// Make sure there are any assets at all
+				releaseAssets, err := stew.GetGiteaReleasesAssets(giteaProject, tag)
+				stew.CatchAndExit(err)
+
+				if asset == "" {
+					asset, err = stew.DetectAsset(userOS, userArch, releaseAssets)
+				}
+				stew.CatchAndExit(err)
+
+				assetIndex, assetFound := stew.Contains(releaseAssets, asset)
+				if !assetFound {
+					asset, err = stew.WarningPromptSelect(
+						fmt.Sprintf("Could not find the asset %v - please select an asset:", constants.YellowColor(asset)),
+						releaseAssets,
+					)
+					stew.CatchAndExit(err)
+					assetIndex, _ = stew.Contains(releaseAssets, asset)
+				}
+				downloadURL = giteaProject.Releases[tagIndex].Assets[assetIndex].DownloadURL
+				owner = giteaProject.Owner
+				repo = giteaProject.Repo
+			default:
+				fmt.Println(constants.GreenColor(owner + "/" + repo))
+				sp.Start()
+				githubProject, err := stew.NewGithubProject(owner, repo)
+				sp.Stop()
+				stew.CatchAndExit(err)
+
+				// This will make sure that there are any tags at all
+				releaseTags, err := stew.GetGithubReleasesTags(githubProject)
+				stew.CatchAndExit(err)
+
+				if tag == "" || tag == "latest" {
+					tag = githubProject.Releases[0].TagName
+				}
+
+				// Need to make sure user input tag is in the tags
+				tagIndex, tagFound := stew.Contains(releaseTags, tag)
+				if !tagFound {
+					tag, err = stew.WarningPromptSelect(
+						fmt.Sprintf(
+							"Could not find a release with the tag %v - please select a release:",
+							constants.YellowColor(tag),
+						),
+						releaseTags,
+					)
+					stew.CatchAndExit(err)
+					tagIndex, _ = stew.Contains(releaseTags, tag)
+				}
+
+				// Make sure there are any assets at all
+				releaseAssets, err := stew.GetGithubReleasesAssets(githubProject, tag)
+				stew.CatchAndExit(err)
+
+				if asset == "" {
+					asset, err = stew.DetectAsset(userOS, userArch, releaseAssets)
+				}
+				stew.CatchAndExit(err)
+
+				assetIndex, assetFound := stew.Contains(releaseAssets, asset)
+				if !assetFound {
+					asset, err = stew.WarningPromptSelect(
+						fmt.Sprintf("Could not find the asset %v - please select an asset:", constants.YellowColor(asset)),
+						releaseAssets,
+					)
+					stew.CatchAndExit(err)
+					assetIndex, _ = stew.Contains(releaseAssets, asset)
+				}
+				downloadURL = githubProject.Releases[tagIndex].Assets[assetIndex].DownloadURL
+				owner = githubProject.Owner
+				repo = githubProject.Repo
 			}
-
-			downloadURL = githubProject.Releases[tagIndex].Assets[assetIndex].DownloadURL
-
 		} else {
 			fmt.Println(constants.GreenColor(asset))
 		}
@@ -120,13 +184,14 @@ func Install(cliInputs []string) {
 		var packageData stew.PackageData
 		if parsedInput.IsGithubInput {
 			packageData = stew.PackageData{
-				Source: "github",
-				Owner:  githubProject.Owner,
-				Repo:   githubProject.Repo,
+				Source: hostType,
+				Owner:  owner,
+				Repo:   repo,
 				Tag:    tag,
 				Asset:  asset,
 				Binary: binaryName,
 				URL:    downloadURL,
+				Host:   host,
 			}
 		} else {
 			packageData = stew.PackageData{
@@ -145,7 +210,11 @@ func Install(cliInputs []string) {
 		err = stew.WriteLockFileJSON(lockFile, stewLockFilePath)
 		stew.CatchAndExit(err)
 
-		fmt.Printf("✨ Successfully installed the %v binary in %v\n", constants.GreenColor(binaryName), constants.GreenColor(stewBinPath))
+		fmt.Printf(
+			"✨ Successfully installed the %v binary in %v\n",
+			constants.GreenColor(binaryName),
+			constants.GreenColor(stewBinPath),
+		)
 
 	}
 }

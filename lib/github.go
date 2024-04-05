@@ -84,7 +84,6 @@ func GetGithubReleasesTags(ghProject GithubProject) ([]string, error) {
 	}
 
 	return releasesTags, nil
-
 }
 
 func releasesFound(releaseTags []string, owner string, repo string) error {
@@ -96,7 +95,6 @@ func releasesFound(releaseTags []string, owner string, repo string) error {
 
 // GetGithubReleasesAssets gets a string slice of the assets for a GithubRelease
 func GetGithubReleasesAssets(ghProject GithubProject, tag string) ([]string, error) {
-
 	releaseAssets := []string{}
 
 	for _, release := range ghProject.Releases {
@@ -113,7 +111,6 @@ func GetGithubReleasesAssets(ghProject GithubProject, tag string) ([]string, err
 	}
 
 	return releaseAssets, nil
-
 }
 
 func assetsFound(releaseAssets []string, releaseTag string) error {
@@ -189,7 +186,10 @@ func DetectAsset(userOS string, userArch string, releaseAssets []string) (string
 			}
 		}
 		if finalAsset == "" {
-			finalAsset, err = WarningPromptSelect("Could not automatically detect the release asset matching your OS/Arch. Please select it manually:", filteredReleaseAssets)
+			finalAsset, err = WarningPromptSelect(
+				"Could not automatically detect the release asset matching your OS/Arch. Please select it manually:",
+				filteredReleaseAssets,
+			)
 			if err != nil {
 				return "", err
 			}
@@ -221,15 +221,15 @@ func darwinARMFallback(darwinAssets []string) (string, error) {
 	return altAssets[0], nil
 }
 
-// GithubSearch contains information about the GitHub search including the GitHub search results
-type GithubSearch struct {
+// RepoSearch contains information about the GitHub search including the GitHub search results
+type RepoSearch struct {
 	SearchQuery string
-	Count       int                  `json:"total_count"`
-	Items       []GithubSearchResult `json:"items"`
+	Count       int                `json:"total_count"`
+	Items       []RepoSearchResult `json:"data"`
 }
 
-// GithubSearchResult contains information about the GitHub search result
-type GithubSearchResult struct {
+// RepoSearchResult contains information about the GitHub search result
+type RepoSearchResult struct {
 	FullName    string `json:"full_name"`
 	Stars       int    `json:"stargazers_count"`
 	Language    string `json:"language"`
@@ -247,25 +247,25 @@ func getGithubSearchJSON(searchQuery string) (string, error) {
 	return response, nil
 }
 
-func readGithubSearchJSON(jsonString string) (GithubSearch, error) {
-	var ghSearch GithubSearch
+func readGithubSearchJSON(jsonString string) (RepoSearch, error) {
+	var ghSearch RepoSearch
 	err := json.Unmarshal([]byte(jsonString), &ghSearch)
 	if err != nil {
-		return GithubSearch{}, err
+		return RepoSearch{}, err
 	}
 	return ghSearch, nil
 }
 
 // NewGithubSearch creates a new instance of the GithubSearch struct
-func NewGithubSearch(searchQuery string) (GithubSearch, error) {
+func NewGithubSearch(searchQuery string) (RepoSearch, error) {
 	ghJSON, err := getGithubSearchJSON(searchQuery)
 	if err != nil {
-		return GithubSearch{}, err
+		return RepoSearch{}, err
 	}
 
 	ghSearch, err := readGithubSearchJSON(ghJSON)
 	if err != nil {
-		return GithubSearch{}, err
+		return RepoSearch{}, err
 	}
 
 	ghSearch.SearchQuery = searchQuery
@@ -274,8 +274,7 @@ func NewGithubSearch(searchQuery string) (GithubSearch, error) {
 }
 
 // FormatSearchResults formats the GitHub search results for the terminal UI
-func FormatSearchResults(ghSearch GithubSearch) []string {
-
+func FormatSearchResults(ghSearch RepoSearch) []string {
 	var formattedSearchResults []string
 	for _, searchResult := range ghSearch.Items {
 		formatted := fmt.Sprintf("%v [⭐️%v] %v", searchResult.FullName, searchResult.Stars, searchResult.Description)
@@ -287,7 +286,6 @@ func FormatSearchResults(ghSearch GithubSearch) []string {
 
 // ValidateGithubSearchQuery makes sure the GitHub search query is valid
 func ValidateGithubSearchQuery(searchQuery string) error {
-
 	reSearch, err := regexp.Compile(constants.RegexGithubSearch)
 	if err != nil {
 		return err

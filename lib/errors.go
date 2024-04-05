@@ -12,7 +12,11 @@ type NonZeroStatusCodeError struct {
 }
 
 func (e NonZeroStatusCodeError) Error() string {
-	return fmt.Sprintf("%v Received non-zero status code from HTTP request: %v", constants.RedColor("Error:"), constants.RedColor(e.StatusCode))
+	return fmt.Sprintf(
+		"%v Received non-zero status code from HTTP request: %v",
+		constants.RedColor("Error:"),
+		constants.RedColor(e.StatusCode),
+	)
 }
 
 // ReleasesNotFoundError occurs if no releases are found for a GitHub repo
@@ -22,7 +26,11 @@ type ReleasesNotFoundError struct {
 }
 
 func (e ReleasesNotFoundError) Error() string {
-	return fmt.Sprintf("%v Could not find any releases for %v", constants.RedColor("Error:"), constants.RedColor("https://github.com/"+e.Owner+"/"+e.Repo))
+	return fmt.Sprintf(
+		"%v Could not find any releases for %v",
+		constants.RedColor("Error:"),
+		constants.RedColor("https://github.com/"+e.Owner+"/"+e.Repo),
+	)
 }
 
 // AssetsNotFoundError occurs if no assets are found for a GitHub release
@@ -31,20 +39,22 @@ type AssetsNotFoundError struct {
 }
 
 func (e AssetsNotFoundError) Error() string {
-	return fmt.Sprintf("%v Could not find any assets for release %v", constants.RedColor("Error:"), constants.RedColor(e.Tag))
+	return fmt.Sprintf(
+		"%v Could not find any assets for release %v",
+		constants.RedColor("Error:"),
+		constants.RedColor(e.Tag),
+	)
 }
 
 // NoPackagesInLockfileError occurs if you try to remove packages from a lockfile without any packages
-type NoPackagesInLockfileError struct {
-}
+type NoPackagesInLockfileError struct{}
 
 func (e NoPackagesInLockfileError) Error() string {
 	return fmt.Sprintf("%v Cannot remove from an empty packages slice in the lockfile", constants.RedColor("Error:"))
 }
 
 // IndexOutOfBoundsInLockfileError occurs if you try to access an out-of-bounds index in the lockfile packages
-type IndexOutOfBoundsInLockfileError struct {
-}
+type IndexOutOfBoundsInLockfileError struct{}
 
 func (e IndexOutOfBoundsInLockfileError) Error() string {
 	return fmt.Sprintf("%v Index out of bounds in lockfile packages", constants.RedColor("Error:"))
@@ -74,20 +84,22 @@ type NonZeroStatusCodeDownloadError struct {
 }
 
 func (e NonZeroStatusCodeDownloadError) Error() string {
-	return fmt.Sprintf("%v Received non-zero status code from HTTP request when attempting to download a file: %v", constants.RedColor("Error:"), constants.RedColor(e.StatusCode))
+	return fmt.Sprintf(
+		"%v Received non-zero status code from HTTP request when attempting to download a file: %v",
+		constants.RedColor("Error:"),
+		constants.RedColor(e.StatusCode),
+	)
 }
 
 // EmptyCLIInputError occurs if the CLI input is empty
-type EmptyCLIInputError struct {
-}
+type EmptyCLIInputError struct{}
 
 func (e EmptyCLIInputError) Error() string {
 	return fmt.Sprintf("%v Input cannot be empty. Use the --help flag for more info", constants.RedColor("Error:"))
 }
 
 // CLIFlagAndInputError occurs if you try to use a CLI flag with a CLI input at the same time
-type CLIFlagAndInputError struct {
-}
+type CLIFlagAndInputError struct{}
 
 func (e CLIFlagAndInputError) Error() string {
 	return fmt.Sprintf("%v Cannot use the --all flag with a positional argument", constants.RedColor("Error:"))
@@ -108,20 +120,22 @@ type BinaryNotInstalledError struct {
 }
 
 func (e BinaryNotInstalledError) Error() string {
-	return fmt.Sprintf("%v The binary %v is not currently installed", constants.RedColor("Error:"), constants.RedColor(e.Binary))
+	return fmt.Sprintf(
+		"%v The binary %v is not currently installed",
+		constants.RedColor("Error:"),
+		constants.RedColor(e.Binary),
+	)
 }
 
 // NoBinariesInstalledError occurs if you try to operate on a binary but no binaries are installed
-type NoBinariesInstalledError struct {
-}
+type NoBinariesInstalledError struct{}
 
 func (e NoBinariesInstalledError) Error() string {
 	return fmt.Sprintf("%v No binaries are currently installed", constants.RedColor("Error:"))
 }
 
 // UnrecognizedInputError occurs if the input is not recognized as a URL or GitHub repo
-type UnrecognizedInputError struct {
-}
+type UnrecognizedInputError struct{}
 
 func (e UnrecognizedInputError) Error() string {
 	return fmt.Sprintf("%v Input was not recognized as a URL or GitHub repo", constants.RedColor("Error:"))
@@ -133,7 +147,11 @@ type InstalledFromURLError struct {
 }
 
 func (e InstalledFromURLError) Error() string {
-	return fmt.Sprintf("%v The %v binary was installed directly from a URL", constants.RedColor("Error:"), constants.RedColor(e.Binary))
+	return fmt.Sprintf(
+		"%v The %v binary was installed directly from a URL",
+		constants.RedColor("Error:"),
+		constants.RedColor(e.Binary),
+	)
 }
 
 // AlreadyInstalledLatestTagError occurs if you try to upgrade a binary but the latest version is already installed
@@ -151,7 +169,11 @@ type NoGithubSearchResultsError struct {
 }
 
 func (e NoGithubSearchResultsError) Error() string {
-	return fmt.Sprintf("%v No GitHub search results found for search query %v", constants.RedColor("Error:"), constants.RedColor(e.SearchQuery))
+	return fmt.Sprintf(
+		"%v No GitHub search results found for search query %v",
+		constants.RedColor("Error:"),
+		constants.RedColor(e.SearchQuery),
+	)
 }
 
 // InvalidGithubSearchQueryError occurs if the GitHub search query contains invalid characters
@@ -160,5 +182,22 @@ type InvalidGithubSearchQueryError struct {
 }
 
 func (e InvalidGithubSearchQueryError) Error() string {
-	return fmt.Sprintf("%v The search query %v contains invalid characters", constants.RedColor("Error:"), constants.RedColor(e.SearchQuery))
+	return fmt.Sprintf(
+		"%v The search query %v contains invalid characters",
+		constants.RedColor("Error:"),
+		constants.RedColor(e.SearchQuery),
+	)
+}
+
+// InvalidGitetaSearchQueryError occurs if the Gitea search query contains invalid characters
+type InvalidGiteaSearchQueryError struct {
+	SearchQuery string
+}
+
+func (e InvalidGiteaSearchQueryError) Error() string {
+	return fmt.Sprintf(
+		"%v The search query %v contains invalid characters",
+		constants.RedColor("Error:"),
+		constants.RedColor(e.SearchQuery),
+	)
 }
