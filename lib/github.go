@@ -45,7 +45,7 @@ func readGithubJSON(jsonString string) (GithubAPIResponse, error) {
 func getGithubJSON(owner, repo string) (string, error) {
 	url := fmt.Sprintf("https://api.github.com/repos/%v/%v/releases?per_page=100", owner, repo)
 
-	response, err := getHTTPResponseBody(url)
+	response, err := getHTTPResponseBody(url, "github")
 	if err != nil {
 		return "", err
 	}
@@ -239,7 +239,7 @@ type RepoSearchResult struct {
 func getGithubSearchJSON(searchQuery string) (string, error) {
 	url := fmt.Sprintf("https://api.github.com/search/repositories?q=%v%v", searchQuery, "+fork:true")
 
-	response, err := getHTTPResponseBody(url)
+	response, err := getHTTPResponseBody(url, "github")
 	if err != nil {
 		return "", err
 	}

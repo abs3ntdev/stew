@@ -40,14 +40,13 @@ func readGiteaJSON(host, owner, repo, jsonString string) (GiteaAPIResponse, erro
 	if err != nil {
 		return GiteaAPIResponse{}, err
 	}
-	fmt.Println(gtProject[0].Assets[0].DownloadURL)
 	return gtProject, nil
 }
 
 func getGiteaJSON(host, owner, repo string) (string, error) {
 	url := fmt.Sprintf("https://%s/api/v1/repos/%v/%v/releases?per_page=100", host, owner, repo)
 
-	response, err := getHTTPResponseBody(url)
+	response, err := getHTTPResponseBody(url, "gitea")
 	if err != nil {
 		return "", err
 	}
@@ -111,7 +110,7 @@ func GetGiteaReleasesAssets(ghProject GiteaProject, tag string) ([]string, error
 func getGiteaSearchJSON(host, searchQuery string) (string, error) {
 	url := fmt.Sprintf("https://%s/api/v1/repos/search?q=%v", host, searchQuery)
 
-	response, err := getHTTPResponseBody(url)
+	response, err := getHTTPResponseBody(url, "gitea")
 	if err != nil {
 		return "", err
 	}

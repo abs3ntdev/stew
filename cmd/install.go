@@ -12,9 +12,6 @@ import (
 
 // Install is executed when you run `stew install`
 func Install(host, hostType string, cliInputs []string) {
-	if hostType == "" {
-		hostType = "github"
-	}
 	var err error
 
 	userOS, userArch, _, systemInfo, err := stew.Initialize()
@@ -161,6 +158,7 @@ func Install(host, hostType string, cliInputs []string) {
 				owner = giteaProject.Owner
 				repo = giteaProject.Repo
 			default:
+				hostType = "github"
 				fmt.Println(constants.GreenColor(owner + "/" + repo))
 				sp.Start()
 				githubProject, err := stew.NewGithubProject(owner, repo)
@@ -215,7 +213,7 @@ func Install(host, hostType string, cliInputs []string) {
 			fmt.Println(constants.GreenColor(asset))
 		}
 		downloadPath := filepath.Join(stewPkgPath, asset)
-		err = stew.DownloadFile(downloadPath, downloadURL)
+		err = stew.DownloadFile(downloadPath, downloadURL, hostType)
 		stew.CatchAndExit(err)
 		fmt.Printf("✅ Downloaded %v to %v\n", constants.GreenColor(asset), constants.GreenColor(stewPkgPath))
 

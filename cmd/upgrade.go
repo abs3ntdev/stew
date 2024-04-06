@@ -98,7 +98,7 @@ func upgradeOne(binaryName, userOS, userArch string, lockFile stew.LockFile, sys
 		assetIndex, _ := stew.Contains(releaseAssets, asset)
 		downloadURL := githubProject.Releases[tagIndex].Assets[assetIndex].DownloadURL
 		downloadPath := filepath.Join(stewPkgPath, asset)
-		err = stew.DownloadFile(downloadPath, downloadURL)
+		err = stew.DownloadFile(downloadPath, downloadURL, pkg.Source)
 		if err != nil {
 			return err
 		}
@@ -160,7 +160,7 @@ func upgradeOne(binaryName, userOS, userArch string, lockFile stew.LockFile, sys
 		assetIndex, _ := stew.Contains(releaseAssets, asset)
 		downloadURL := giteaProject.Releases[tagIndex].Assets[assetIndex].DownloadURL
 		downloadPath := filepath.Join(stewPkgPath, asset)
-		err = stew.DownloadFile(downloadPath, downloadURL)
+		err = stew.DownloadFile(downloadPath, downloadURL, pkg.Source)
 		if err != nil {
 			return err
 		}

@@ -51,7 +51,7 @@ func PathExists(path string) (bool, error) {
 }
 
 // DownloadFile will download a file from url to a given path
-func DownloadFile(downloadPath string, url string) error {
+func DownloadFile(downloadPath string, url string, hostType string) error {
 	sp := constants.LoadingSpinner
 	sp.Start()
 	client := &http.Client{}
@@ -60,11 +60,18 @@ func DownloadFile(downloadPath string, url string) error {
 		return err
 	}
 
-	if strings.Contains(url, "api.github.com") {
+	switch hostType {
+	case "github":
 		req.Header.Add("Accept", "application/octet-stream")
 		githubToken := os.Getenv("GITHUB_TOKEN")
 		if githubToken != "" {
 			req.Header.Add("Authorization", fmt.Sprintf("token %v", githubToken))
+		}
+	case "gitea":
+		req.Header.Add("Accept", "application/octet-stream")
+		giteaToken := os.Getenv("GITEA_TOKEN")
+		if giteaToken != "" {
+			req.Header.Add("Authorization", fmt.Sprintf("token %v", giteaToken))
 		}
 	}
 

@@ -41,7 +41,7 @@ func TestGetHTTPResponseBody(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			defer test.server.Close()
 
-			got, err := getHTTPResponseBody(test.server.URL)
+			got, err := getHTTPResponseBody(test.server.URL, "github")
 			if (err != nil) != test.wantErr {
 				t.Errorf("getHTTPResponseBody() error = %v, wantErr %v", err, test.wantErr)
 				return

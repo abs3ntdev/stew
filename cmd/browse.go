@@ -66,7 +66,7 @@ func handleGitea(host, owner, repo string, systemInfo stew.SystemInfo, userOS, u
 
 	downloadURL := giteaProject.Releases[tagIndex].Assets[assetIndex].DownloadURL
 	downloadPath := filepath.Join(stewPkgPath, asset)
-	err = stew.DownloadFile(downloadPath, downloadURL)
+	err = stew.DownloadFile(downloadPath, downloadURL, "gitea")
 	stew.CatchAndExit(err)
 	fmt.Printf("✅ Downloaded %v to %v\n", constants.GreenColor(asset), constants.GreenColor(stewPkgPath))
 
@@ -124,7 +124,7 @@ func handleGithub(owner, repo string, systemInfo stew.SystemInfo, userOS, userAr
 
 	downloadURL := githubProject.Releases[tagIndex].Assets[assetIndex].DownloadURL
 	downloadPath := filepath.Join(stewPkgPath, asset)
-	err = stew.DownloadFile(downloadPath, downloadURL)
+	err = stew.DownloadFile(downloadPath, downloadURL, "github")
 	stew.CatchAndExit(err)
 	fmt.Printf("✅ Downloaded %v to %v\n", constants.GreenColor(asset), constants.GreenColor(stewPkgPath))
 
