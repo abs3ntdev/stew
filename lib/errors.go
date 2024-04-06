@@ -201,3 +201,16 @@ func (e InvalidGiteaSearchQueryError) Error() string {
 		constants.RedColor(e.SearchQuery),
 	)
 }
+
+// InvalidGitlabSearchQueryError occurs if the Gitea search query contains invalid characters
+type InvalidGitlabSearchQueryError struct {
+	SearchQuery string
+}
+
+func (e InvalidGitlabSearchQueryError) Error() string {
+	return fmt.Sprintf(
+		"%v The search query %v contains invalid characters",
+		constants.RedColor("Error:"),
+		constants.RedColor(e.SearchQuery),
+	)
+}

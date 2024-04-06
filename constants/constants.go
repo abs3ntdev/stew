@@ -51,5 +51,8 @@ var RegexGithubSearch = `(?i)^[A-Za-z0-9\_\.\-\/]+$`
 // RegexGiteaSearch is a regular express for valid Gitea search queries
 var RegexGiteaSearch = `(?i)^[A-Za-z0-9\_\.\-\/]+$`
 
+// RegexGiteaSearch is a regular express for valid Gitea search queries
+var RegexGitlabSearch = `(?i)^[A-Za-z0-9\_\.\-\/]+$`
+
 // RegexURL is a regular express for valid URLs
 var RegexURL = `(http|ftp|https):\/\/([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:\/~+#-]*[\w@?^=%&\/~+#-])`

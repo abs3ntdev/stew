@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -51,11 +52,11 @@ func PathExists(path string) (bool, error) {
 }
 
 // DownloadFile will download a file from url to a given path
-func DownloadFile(downloadPath string, url string, hostType string) error {
+func DownloadFile(downloadPath string, urlInput string, hostType string) error {
 	sp := constants.LoadingSpinner
 	sp.Start()
 	client := &http.Client{}
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", urlInput, nil)
 	if err != nil {
 		return err
 	}
@@ -69,7 +70,12 @@ func DownloadFile(downloadPath string, url string, hostType string) error {
 		}
 	case "gitea":
 		req.Header.Add("Accept", "application/octet-stream")
-		giteaToken := os.Getenv("GITEA_TOKEN")
+		parsedUrl, err := url.Parse(urlInput)
+		CatchAndExit(err)
+		host := parsedUrl.Host
+		host = strings.ReplaceAll(host, ".", "_")
+		host = strings.ToUpper(host)
+		giteaToken := os.Getenv(host + "_TOKEN")
 		if giteaToken != "" {
 			req.Header.Add("Authorization", fmt.Sprintf("token %v", giteaToken))
 		}
