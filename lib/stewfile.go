@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/marwanhawari/stew/constants"
 )
@@ -75,45 +76,72 @@ func RemovePackage(pkgs []PackageData, index int) ([]PackageData, error) {
 }
 
 // ReadStewfileContents will read the contents of the Stewfile
-func ReadStewfileContents(stewfilePath string) ([]string, error) {
+func ReadStewfileContents(stewfilePath string) ([]PackageData, error) {
 	file, err := os.Open(stewfilePath)
 	if err != nil {
-		return []string{}, err
+		return []PackageData{}, err
 	}
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
 
-	var packages []string
+	var packages []PackageData
 	for scanner.Scan() {
-		packages = append(packages, scanner.Text())
+		line := scanner.Text()
+		packageAndOptions := strings.SplitN(line, "?", 2)
+		packageString := packageAndOptions[0]
+		options := make(map[string]string, 0)
+		if len(packageAndOptions) == 2 {
+			optionsSplit := strings.Split(packageAndOptions[1], "&")
+			for _, option := range optionsSplit {
+				optionkv := strings.Split(option, "=")
+				options[optionkv[0]] = optionkv[1]
+			}
+		}
+		if strings.HasPrefix(packageString, "https") || strings.HasPrefix(packageString, "http") {
+			p := PackageData{
+				URL:    packageString,
+				Source: "other",
+			}
+			packages = append(packages, p)
+			continue
+		}
+		splitInput := strings.Split(packageString, "@")
+		owner := strings.Split(splitInput[0], "/")[0]
+		repo := strings.Split(splitInput[0], "/")[1]
+		p := PackageData{
+			Repo:  repo,
+			Owner: owner,
+		}
+		if len(splitInput) == 2 {
+			tagAndAsset := strings.Split(splitInput[1], "#")
+			if len(tagAndAsset) == 2 {
+				p.Asset = tagAndAsset[1]
+			}
+			p.Tag = tagAndAsset[0]
+		}
+		p.Host = options["host"]
+		p.Source = "github"
+		if options["source"] != "" {
+			p.Source = options["source"]
+		}
+		packages = append(packages, p)
 	}
 
 	if err := scanner.Err(); err != nil {
-		return []string{}, err
+		return []PackageData{}, err
 	}
 
 	return packages, nil
 }
 
-func ReadStewLockFileContents(lockFilePath string) ([]string, error) {
+func ReadStewLockFileContents(lockFilePath string) ([]PackageData, error) {
 	lockFile, err := readLockFileJSON(lockFilePath)
 	if err != nil {
-		return []string{}, err
+		return []PackageData{}, err
 	}
 
-	var packages []string
-	for _, pkg := range lockFile.Packages {
-		switch pkg.Source {
-		case "other":
-			packages = append(packages, pkg.URL)
-		case "github":
-			path := fmt.Sprintf("%s/%s@%s", pkg.Owner, pkg.Repo, pkg.Tag)
-			packages = append(packages, path)
-		}
-	}
-
-	return packages, nil
+	return lockFile.Packages, nil
 }
 
 // NewLockFile creates a new instance of the LockFile struct

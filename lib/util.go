@@ -240,7 +240,11 @@ func parseGithubInput(cliInput string) (CLIInput, error) {
 	parsedInput.Repo = splitOwnerAndRepo[1]
 
 	if len(splitInput) == 2 {
-		parsedInput.Tag = splitInput[1]
+		tagAndAsset := strings.SplitN(splitInput[1], "#", 2)
+		parsedInput.Tag = tagAndAsset[0]
+		if len(tagAndAsset) == 2 {
+			parsedInput.Asset = tagAndAsset[1]
+		}
 	}
 
 	return parsedInput, nil

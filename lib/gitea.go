@@ -21,23 +21,26 @@ type GiteaAPIResponse []GiteaRelease
 // GiteaRelease contains information about a Gitea release, including the associated assets
 type GiteaRelease struct {
 	TagName string       `json:"tag_name"`
+	ID      int          `json:"id"`
 	Assets  []GiteaAsset `json:"assets"`
 }
 
 // GiteaAsset contains information about a specific Gitea asset
 type GiteaAsset struct {
+	ID          int    `json:"id"`
 	Name        string `json:"name"`
 	DownloadURL string `json:"browser_download_url"`
 	Size        int    `json:"size"`
 	ContentType string `json:"content_type"`
 }
 
-func readGiteaJSON(jsonString string) (GiteaAPIResponse, error) {
+func readGiteaJSON(host, owner, repo, jsonString string) (GiteaAPIResponse, error) {
 	var gtProject GiteaAPIResponse
 	err := json.Unmarshal([]byte(jsonString), &gtProject)
 	if err != nil {
 		return GiteaAPIResponse{}, err
 	}
+	fmt.Println(gtProject[0].Assets[0].DownloadURL)
 	return gtProject, nil
 }
 
@@ -59,7 +62,7 @@ func NewGiteaProject(host, owner, repo string) (GiteaProject, error) {
 		return GiteaProject{}, err
 	}
 
-	gtAPIResponse, err := readGiteaJSON(gtJSON)
+	gtAPIResponse, err := readGiteaJSON(host, owner, repo, gtJSON)
 	if err != nil {
 		return GiteaProject{}, err
 	}

@@ -28,7 +28,7 @@ type GithubRelease struct {
 // GithubAsset contains information about a specific GitHub asset
 type GithubAsset struct {
 	Name        string `json:"name"`
-	DownloadURL string `json:"url"`
+	DownloadURL string `json:"browser_download_url"`
 	Size        int    `json:"size"`
 	ContentType string `json:"content_type"`
 }

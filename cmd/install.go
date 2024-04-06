@@ -22,20 +22,65 @@ func Install(host, hostType string, cliInputs []string) {
 
 	for _, cliInput := range cliInputs {
 		if strings.Contains(cliInput, "Stewfile.lock.json") {
-			cliInputs, err = stew.ReadStewLockFileContents(cliInput)
+			packages, err := stew.ReadStewLockFileContents(cliInput)
 			stew.CatchAndExit(err)
-			break
+			for _, packageData := range packages {
+				switch packageData.Source {
+				case "other":
+					Install("", "", []string{packageData.URL})
+				case "gitea":
+					Install(
+						packageData.Host,
+						"gitea",
+						[]string{
+							packageData.Owner + "/" + packageData.Repo + "@" + packageData.Tag + "#" + packageData.Asset,
+						},
+					)
+				default:
+					Install(
+						"",
+						"github",
+						[]string{
+							packageData.Owner + "/" + packageData.Repo + "@" + packageData.Tag + "#" + packageData.Asset,
+						},
+					)
+				}
+			}
+			return
 		}
 
 		if strings.Contains(cliInput, "Stewfile") {
-			cliInputs, err = stew.ReadStewfileContents(cliInput)
+			packages, err := stew.ReadStewfileContents(cliInput)
 			stew.CatchAndExit(err)
-			break
+			for _, packageData := range packages {
+				fmt.Printf("%+v\n", packageData)
+				switch packageData.Source {
+				case "other":
+					Install("", "", []string{packageData.URL})
+				case "gitea":
+					Install(
+						packageData.Host,
+						"gitea",
+						[]string{
+							packageData.Owner + "/" + packageData.Repo + "@" + packageData.Tag + "#" + packageData.Asset,
+						},
+					)
+				default:
+					Install(
+						"",
+						"github",
+						[]string{
+							packageData.Owner + "/" + packageData.Repo + "@" + packageData.Tag + "#" + packageData.Asset,
+						},
+					)
+				}
+			}
+			return
 		}
 	}
 
 	if len(cliInputs) == 0 {
-		stew.CatchAndExit(stew.EmptyCLIInputError{})
+		return
 	}
 
 	for _, cliInput := range cliInputs {
@@ -169,7 +214,6 @@ func Install(host, hostType string, cliInputs []string) {
 		} else {
 			fmt.Println(constants.GreenColor(asset))
 		}
-
 		downloadPath := filepath.Join(stewPkgPath, asset)
 		err = stew.DownloadFile(downloadPath, downloadURL)
 		stew.CatchAndExit(err)
