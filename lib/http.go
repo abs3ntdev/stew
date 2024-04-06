@@ -23,6 +23,17 @@ func getHTTPResponseBody(urlInput string, hostType string) (string, error) {
 		if githubToken != "" {
 			req.Header.Add("Authorization", fmt.Sprintf("token %v", githubToken))
 		}
+	case "gitlab":
+		req.Header.Add("Accept", "application/octet-stream")
+		parsedUrl, err := url.Parse(urlInput)
+		CatchAndExit(err)
+		host := parsedUrl.Host
+		host = strings.ReplaceAll(host, ".", "_")
+		host = strings.ToUpper(host)
+		giteaToken := os.Getenv(host + "_TOKEN")
+		if giteaToken != "" {
+			req.Header.Add("Authorization", fmt.Sprintf("Bearer %v", giteaToken))
+		}
 	case "gitea":
 		req.Header.Add("Accept", "application/octet-stream")
 		parsedUrl, err := url.Parse(urlInput)

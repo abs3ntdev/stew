@@ -16,7 +16,7 @@ func Browse(host, hostType, repoFullName string) {
 	}
 	fmt.Println(repoFullName)
 
-	parsedInput, err := stew.ParseCLIInput(repoFullName)
+	parsedInput, err := stew.ParseCLIInput(repoFullName, hostType)
 	stew.CatchAndExit(err)
 
 	owner := parsedInput.Owner

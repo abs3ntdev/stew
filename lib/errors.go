@@ -33,6 +33,26 @@ func (e ReleasesNotFoundError) Error() string {
 	)
 }
 
+// ReleasesNotFoundError occurs if no releases are found for a GitHub repo
+type GitlabReleasesNotFoundError struct {
+	Groups []string
+	Repo   string
+	Host   string
+}
+
+func (e GitlabReleasesNotFoundError) Error() string {
+	projectString := ""
+	for _, group := range e.Groups {
+		projectString += group + "/"
+	}
+	projectString += e.Repo
+	return fmt.Sprintf(
+		"%v Could not find any releases for %v",
+		constants.RedColor("Error:"),
+		constants.RedColor("https://%s/"+projectString),
+	)
+}
+
 // AssetsNotFoundError occurs if no assets are found for a GitHub release
 type AssetsNotFoundError struct {
 	Tag string

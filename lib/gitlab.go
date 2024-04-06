@@ -10,8 +10,8 @@ import (
 
 // GitlabProject contains information about the Gitlab project including Gitlab releases
 type GitlabProject struct {
-	Owner    string
-	Repo     string
+	Groups   []string
+	Project  string
 	Releases GitlabAPIResponse
 }
 
@@ -20,21 +20,23 @@ type GitlabAPIResponse []GitlabRelease
 
 // GitlabRelease contains information about a Gitlab release, including the associated assets
 type GitlabRelease struct {
-	TagName string        `json:"tag_name"`
-	ID      int           `json:"id"`
-	Assets  []GitlabAsset `json:"assets"`
+	TagName string      `json:"tag_name"`
+	Name    string      `json:"name"`
+	Assets  GitlabAsset `json:"assets"`
 }
 
 // GitlabAsset contains information about a specific Gitlab asset
 type GitlabAsset struct {
-	ID          int    `json:"id"`
-	Name        string `json:"name"`
-	DownloadURL string `json:"browser_download_url"`
-	Size        int    `json:"size"`
-	ContentType string `json:"content_type"`
+	Links []GitlabSources `json:"links"`
 }
 
-func readGitlabJSON(host, owner, repo, jsonString string) (GitlabAPIResponse, error) {
+type GitlabSources struct {
+	ID          int    `json:"id"`
+	Name        string `json:"name"`
+	DownloadURL string `json:"url"`
+}
+
+func readGitlabJSON(host string, groups []string, project, jsonString string) (GitlabAPIResponse, error) {
 	var gtProject GitlabAPIResponse
 	err := json.Unmarshal([]byte(jsonString), &gtProject)
 	if err != nil {
@@ -43,9 +45,14 @@ func readGitlabJSON(host, owner, repo, jsonString string) (GitlabAPIResponse, er
 	return gtProject, nil
 }
 
-func getGitlabJSON(host, owner, repo string) (string, error) {
-	url := fmt.Sprintf("https://%s/api/v1/repos/%v/%v/releases?per_page=100", host, owner, repo)
-
+func getGitlabJSON(host string, groups []string, project string) (string, error) {
+	projectString := ""
+	for _, group := range groups {
+		projectString += group + "%2F"
+	}
+	projectString += project
+	url := fmt.Sprintf("https://%s/api/v4/projects/%s/releases?per_page=100", host, projectString)
+	fmt.Println(url)
 	response, err := getHTTPResponseBody(url, "gitlab")
 	if err != nil {
 		return "", err
@@ -55,36 +62,43 @@ func getGitlabJSON(host, owner, repo string) (string, error) {
 }
 
 // NewGitlabProject creates a new instance of the GitlabProject struct
-func NewGitlabProject(host, owner, repo string) (GitlabProject, error) {
-	gtJSON, err := getGitlabJSON(host, owner, repo)
+func NewGitlabProject(host string, groups []string, project string) (GitlabProject, error) {
+	gtJSON, err := getGitlabJSON(host, groups, project)
 	if err != nil {
 		return GitlabProject{}, err
 	}
 
-	gtAPIResponse, err := readGitlabJSON(host, owner, repo, gtJSON)
+	gtAPIResponse, err := readGitlabJSON(host, groups, project, gtJSON)
 	if err != nil {
 		return GitlabProject{}, err
 	}
 
-	ghProject := GitlabProject{Owner: owner, Repo: repo, Releases: gtAPIResponse}
+	ghProject := GitlabProject{Groups: groups, Project: project, Releases: gtAPIResponse}
 
 	return ghProject, nil
 }
 
 // GetGitlabReleasesTags gets a string slice of the releases for a GitlabProject
-func GetGitlabReleasesTags(ghProject GitlabProject) ([]string, error) {
+func GetGitlabReleasesTags(ghProject GitlabProject, host string) ([]string, error) {
 	releasesTags := []string{}
 
 	for _, release := range ghProject.Releases {
 		releasesTags = append(releasesTags, release.TagName)
 	}
 
-	err := releasesFound(releasesTags, ghProject.Owner, ghProject.Repo)
+	err := gitlabReleasesFound(releasesTags, ghProject.Groups, ghProject.Project, host)
 	if err != nil {
 		return []string{}, err
 	}
 
 	return releasesTags, nil
+}
+
+func gitlabReleasesFound(releaseTags []string, owner []string, repo string, host string) error {
+	if len(releaseTags) == 0 {
+		return GitlabReleasesNotFoundError{Groups: owner, Repo: repo, Host: host}
+	}
+	return nil
 }
 
 // GetGitlabReleasesAssets gets a string slice of the assets for a GitlabRelease
@@ -93,7 +107,7 @@ func GetGitlabReleasesAssets(ghProject GitlabProject, tag string) ([]string, err
 
 	for _, release := range ghProject.Releases {
 		if release.TagName == tag {
-			for _, asset := range release.Assets {
+			for _, asset := range release.Assets.Links {
 				releaseAssets = append(releaseAssets, asset.Name)
 			}
 		}

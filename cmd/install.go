@@ -88,9 +88,10 @@ func Install(host, hostType string, cliInputs []string) {
 		stewLockFilePath := systemInfo.StewLockFilePath
 		stewTmpPath := systemInfo.StewTmpPath
 
-		parsedInput, err := stew.ParseCLIInput(cliInput)
+		parsedInput, err := stew.ParseCLIInput(cliInput, hostType)
 		stew.CatchAndExit(err)
 
+		groups := parsedInput.Groups
 		owner := parsedInput.Owner
 		repo := parsedInput.Repo
 		tag := parsedInput.Tag
@@ -157,6 +158,64 @@ func Install(host, hostType string, cliInputs []string) {
 				downloadURL = giteaProject.Releases[tagIndex].Assets[assetIndex].DownloadURL
 				owner = giteaProject.Owner
 				repo = giteaProject.Repo
+			case "gitlab":
+				groupString := ""
+				for _, group := range groups {
+					groupString += group + "/"
+				}
+				fmt.Println(constants.GreenColor(groupString + repo))
+				sp.Start()
+				gitlabProject, err := stew.NewGitlabProject(host, groups, repo)
+				sp.Stop()
+				stew.CatchAndExit(err)
+
+				// This will make sure that there are any tags at all
+				releaseTags, err := stew.GetGitlabReleasesTags(gitlabProject, host)
+				stew.CatchAndExit(err)
+
+				if tag == "" || tag == "latest" {
+					tag = gitlabProject.Releases[0].TagName
+				}
+
+				// Need to make sure user input tag is in the tags
+				tagIndex, tagFound := stew.Contains(releaseTags, tag)
+				if !tagFound {
+					tag, err = stew.WarningPromptSelect(
+						fmt.Sprintf(
+							"Could not find a release with the tag %v - please select a release:",
+							constants.YellowColor(tag),
+						),
+						releaseTags,
+					)
+					stew.CatchAndExit(err)
+					tagIndex, _ = stew.Contains(releaseTags, tag)
+				}
+
+				// Make sure there are any assets at all
+				releaseAssets, err := stew.GetGitlabReleasesAssets(gitlabProject, tag)
+				stew.CatchAndExit(err)
+
+				if asset == "" {
+					asset, err = stew.DetectAsset(userOS, userArch, releaseAssets)
+				}
+				stew.CatchAndExit(err)
+
+				assetIndex, assetFound := stew.Contains(releaseAssets, asset)
+				if !assetFound {
+					asset, err = stew.WarningPromptSelect(
+						fmt.Sprintf("Could not find the asset %v - please select an asset:", constants.YellowColor(asset)),
+						releaseAssets,
+					)
+					stew.CatchAndExit(err)
+					assetIndex, _ = stew.Contains(releaseAssets, asset)
+				}
+				downloadURL = gitlabProject.Releases[tagIndex].Assets.Links[assetIndex].DownloadURL
+				ownerString := ""
+				for _, group := range gitlabProject.Groups {
+					ownerString += group + "/"
+				}
+				owner = strings.TrimSuffix(ownerString, "/")
+				repo = gitlabProject.Project
 			default:
 				hostType = "github"
 				fmt.Println(constants.GreenColor(owner + "/" + repo))

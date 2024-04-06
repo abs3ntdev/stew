@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -53,6 +54,7 @@ func PathExists(path string) (bool, error) {
 
 // DownloadFile will download a file from url to a given path
 func DownloadFile(downloadPath string, urlInput string, hostType string) error {
+	fmt.Println(urlInput)
 	sp := constants.LoadingSpinner
 	sp.Start()
 	client := &http.Client{}
@@ -67,6 +69,17 @@ func DownloadFile(downloadPath string, urlInput string, hostType string) error {
 		githubToken := os.Getenv("GITHUB_TOKEN")
 		if githubToken != "" {
 			req.Header.Add("Authorization", fmt.Sprintf("token %v", githubToken))
+		}
+	case "gitlab":
+		req.Header.Add("Accept", "application/octet-stream")
+		parsedUrl, err := url.Parse(urlInput)
+		CatchAndExit(err)
+		host := parsedUrl.Host
+		host = strings.ReplaceAll(host, ".", "_")
+		host = strings.ToUpper(host)
+		giteaToken := os.Getenv(host + "_TOKEN")
+		if giteaToken != "" {
+			req.Header.Add("Authorization", fmt.Sprintf("Bearer %v", giteaToken))
 		}
 	case "gitea":
 		req.Header.Add("Accept", "application/octet-stream")
@@ -209,33 +222,86 @@ type CLIInput struct {
 	Tag           string
 	Asset         string
 	DownloadURL   string
+	Groups        []string
 }
 
 // ParseCLIInput creates a new instance of the CLIInput struct
-func ParseCLIInput(cliInput string) (CLIInput, error) {
-	err := ValidateCLIInput(cliInput)
-	if err != nil {
-		return CLIInput{}, err
-	}
+func ParseCLIInput(cliInput string, hostType string) (CLIInput, error) {
+	switch hostType {
+	case "gitlab":
+		err := ValidateCLIInput(cliInput)
+		if err != nil {
+			return CLIInput{}, err
+		}
 
-	reGithub, err := regexp.Compile(constants.RegexGithub)
-	if err != nil {
-		return CLIInput{}, err
+		reGithub, err := regexp.Compile(constants.RegexGitlab)
+		if err != nil {
+			return CLIInput{}, err
+		}
+		reURL, err := regexp.Compile(constants.RegexURL)
+		if err != nil {
+			return CLIInput{}, err
+		}
+		var parsedInput CLIInput
+		if reGithub.MatchString(cliInput) {
+			parsedInput, err = parseGitlabInput(cliInput)
+		} else if reURL.MatchString(cliInput) {
+			parsedInput, err = parseURLInput(cliInput)
+		} else {
+			return CLIInput{}, UnrecognizedInputError{}
+		}
+		if err != nil {
+			return CLIInput{}, err
+		}
+
+		return parsedInput, nil
+	default:
+		err := ValidateCLIInput(cliInput)
+		if err != nil {
+			return CLIInput{}, err
+		}
+
+		reGithub, err := regexp.Compile(constants.RegexGithub)
+		if err != nil {
+			return CLIInput{}, err
+		}
+		reURL, err := regexp.Compile(constants.RegexURL)
+		if err != nil {
+			return CLIInput{}, err
+		}
+		var parsedInput CLIInput
+		if reGithub.MatchString(cliInput) {
+			parsedInput, err = parseGithubInput(cliInput)
+		} else if reURL.MatchString(cliInput) {
+			parsedInput, err = parseURLInput(cliInput)
+		} else {
+			return CLIInput{}, UnrecognizedInputError{}
+		}
+		if err != nil {
+			return CLIInput{}, err
+		}
+
+		return parsedInput, nil
 	}
-	reURL, err := regexp.Compile(constants.RegexURL)
-	if err != nil {
-		return CLIInput{}, err
-	}
-	var parsedInput CLIInput
-	if reGithub.MatchString(cliInput) {
-		parsedInput, err = parseGithubInput(cliInput)
-	} else if reURL.MatchString(cliInput) {
-		parsedInput, err = parseURLInput(cliInput)
-	} else {
-		return CLIInput{}, UnrecognizedInputError{}
-	}
-	if err != nil {
-		return CLIInput{}, err
+}
+
+func parseGitlabInput(cliInput string) (CLIInput, error) {
+	parsedInput := CLIInput{}
+	parsedInput.IsGithubInput = true
+	trimmedString := strings.Trim(strings.Trim(strings.TrimSpace(cliInput), "/"), "@")
+	splitInput := strings.SplitN(trimmedString, "@", 2)
+
+	groupsAndRepo := splitInput[0]
+	groups := strings.Split(path.Dir(groupsAndRepo), "/")
+	parsedInput.Groups = groups
+	parsedInput.Repo = path.Base(groupsAndRepo)
+
+	if len(splitInput) == 2 {
+		tagAndAsset := strings.SplitN(splitInput[1], "#", 2)
+		parsedInput.Tag = tagAndAsset[0]
+		if len(tagAndAsset) == 2 {
+			parsedInput.Asset = tagAndAsset[1]
+		}
 	}
 
 	return parsedInput, nil

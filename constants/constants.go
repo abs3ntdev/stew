@@ -45,6 +45,9 @@ var Regex386 = `(?i)(i?386|x86_32|amd32|x32)`
 // RegexGithub is a regular express for valid GitHub repos
 var RegexGithub = `(?i)^[A-Za-z0-9\-]+\/[A-Za-z0-9\_\.\-]+(@.+)?$`
 
+// RegexGithub is a regular express for valid GitHub repos
+var RegexGitlab = `(?i)^[A-Za-z0-9\-]+\/[A-Za-z0-9\_\.\-]+(@.+)?$`
+
 // RegexGithubSearch is a regular express for valid GitHub search queries
 var RegexGithubSearch = `(?i)^[A-Za-z0-9\_\.\-\/]+$`
 
@@ -52,7 +55,7 @@ var RegexGithubSearch = `(?i)^[A-Za-z0-9\_\.\-\/]+$`
 var RegexGiteaSearch = `(?i)^[A-Za-z0-9\_\.\-\/]+$`
 
 // RegexGiteaSearch is a regular express for valid Gitea search queries
-var RegexGitlabSearch = `(?i)^[A-Za-z0-9\_\.\-\/]+$`
+var RegexGitlabSearch = `(?i)(\w+\/){1,20}\w+?$`
 
 // RegexURL is a regular express for valid URLs
 var RegexURL = `(http|ftp|https):\/\/([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:\/~+#-]*[\w@?^=%&\/~+#-])`
