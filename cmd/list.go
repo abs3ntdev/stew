@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 
 	stew "github.com/marwanhawari/stew/lib"
@@ -8,7 +9,6 @@ import (
 
 // List is executed when you run `stew list`
 func List(cliTagsFlag bool) {
-
 	userOS, userArch, _, systemInfo, err := stew.Initialize()
 	stew.CatchAndExit(err)
 
@@ -21,16 +21,29 @@ func List(cliTagsFlag bool) {
 		return
 	}
 
+	sources := make(map[string][]string)
 	for _, pkg := range lockFile.Packages {
 		switch pkg.Source {
 		case "other":
+			sources["urls"] = append(sources["other"], pkg.URL)
 			fmt.Println(pkg.URL)
 		case "github":
 			if cliTagsFlag {
-				fmt.Println(pkg.Owner + "/" + pkg.Repo + "@" + pkg.Tag)
+				sources["github.com"] = append(sources["github.com"], pkg.Owner+"/"+pkg.Repo+"@"+pkg.Tag)
 			} else {
-				fmt.Println(pkg.Owner + "/" + pkg.Repo)
+				sources["github.com"] = append(sources["github.com"], pkg.Owner+"/"+pkg.Repo)
+			}
+		case "gitlab", "gitea":
+			if cliTagsFlag {
+				sources[pkg.Host] = append(sources[pkg.Host], pkg.Owner+"/"+pkg.Repo+"@"+pkg.Tag)
+			} else {
+				sources[pkg.Host] = append(sources[pkg.Host], pkg.Owner+"/"+pkg.Repo)
 			}
 		}
 	}
+	out, err := json.MarshalIndent(sources, "", "  ")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	fmt.Println(string(out))
 }
