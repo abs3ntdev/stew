@@ -31,6 +31,11 @@ func Search(host, hostType, searchQuery string) {
 			stew.CatchAndExit(fmt.Errorf("Host is required for Gitea search"))
 		}
 		searchResults, err = stew.NewGiteaSearch(host, searchQuery)
+	case "gitlab":
+		if host == "" {
+			stew.CatchAndExit(fmt.Errorf("Host is required for Gitlab search"))
+		}
+		searchResults, err = stew.NewGitlabSearch(host, searchQuery)
 	default:
 		searchResults, err = stew.NewGithubSearch(searchQuery)
 	}

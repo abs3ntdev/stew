@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/marwanhawari/stew/constants"
 	stew "github.com/marwanhawari/stew/lib"
@@ -21,6 +22,7 @@ func Browse(host, hostType, repoFullName string) {
 
 	owner := parsedInput.Owner
 	repo := parsedInput.Repo
+	groups := parsedInput.Groups
 
 	stew.CatchAndExit(err)
 	userOS, userArch, _, systemInfo, err := stew.Initialize()
@@ -29,6 +31,8 @@ func Browse(host, hostType, repoFullName string) {
 	switch hostType {
 	case "gitea":
 		handleGitea(host, owner, repo, systemInfo, userOS, userArch)
+	case "gitlab":
+		handleGitlab(host, groups, repo, systemInfo, userOS, userArch)
 	default:
 		handleGithub(owner, repo, systemInfo, userOS, userArch)
 	}
@@ -41,11 +45,77 @@ func Browse(host, hostType, repoFullName string) {
 	fmt.Println(constants.GreenColor(owner + "/" + repo))
 }
 
+func handleGitlab(host string, groups []string, repo string, systemInfo stew.SystemInfo, userOS, userArch string) {
+	stewLockFilePath := systemInfo.StewLockFilePath
+	stewBinPath := systemInfo.StewBinPath
+	stewPkgPath := systemInfo.StewPkgPath
+	lockFile, err := stew.NewLockFile(stewLockFilePath, userOS, userArch)
+	stew.CatchAndExit(err)
+	sp := constants.LoadingSpinner
+	sp.Start()
+	gitlabProject, err := stew.NewGitlabProject(host, groups, repo)
+	sp.Stop()
+	stew.CatchAndExit(err)
+
+	releaseTags, err := stew.GetGitlabReleasesTags(gitlabProject, host)
+	stew.CatchAndExit(err)
+	tag, err := stew.PromptSelect("Choose a release tag:", releaseTags)
+	stew.CatchAndExit(err)
+	tagIndex, _ := stew.Contains(releaseTags, tag)
+
+	releaseAssets, err := stew.GetGitlabReleasesAssets(gitlabProject, tag)
+	stew.CatchAndExit(err)
+	asset, err := stew.PromptSelect("Download and install an asset", releaseAssets)
+	stew.CatchAndExit(err)
+	assetIndex, _ := stew.Contains(releaseAssets, asset)
+
+	downloadURL := gitlabProject.Releases[tagIndex].Assets.Links[assetIndex].DownloadURL
+	downloadPath := filepath.Join(stewPkgPath, asset)
+	err = stew.DownloadFile(downloadPath, downloadURL, "gitea")
+	stew.CatchAndExit(err)
+	fmt.Printf("✅ Downloaded %v to %v\n", constants.GreenColor(asset), constants.GreenColor(stewPkgPath))
+
+	binaryName, err := stew.InstallBinary(downloadPath, repo, systemInfo, &lockFile, false)
+	if err != nil {
+		os.RemoveAll(downloadPath)
+		stew.CatchAndExit(err)
+	}
+
+	groupString := ""
+	for _, group := range groups {
+		groupString += group + "/"
+	}
+	groupString = strings.TrimSuffix(groupString, "/")
+
+	packageData := stew.PackageData{
+		Source: "gitlab",
+		Owner:  groupString,
+		Repo:   gitlabProject.Project,
+		Tag:    tag,
+		Asset:  asset,
+		Binary: binaryName,
+		URL:    downloadURL,
+		Host:   host,
+	}
+
+	lockFile.Packages = append(lockFile.Packages, packageData)
+
+	err = stew.WriteLockFileJSON(lockFile, stewLockFilePath)
+	stew.CatchAndExit(err)
+
+	fmt.Printf(
+		"✨ Successfully installed the %v binary in %v\n",
+		constants.GreenColor(binaryName),
+		constants.GreenColor(stewBinPath),
+	)
+}
+
 func handleGitea(host, owner, repo string, systemInfo stew.SystemInfo, userOS, userArch string) {
 	stewLockFilePath := systemInfo.StewLockFilePath
 	stewBinPath := systemInfo.StewBinPath
 	stewPkgPath := systemInfo.StewPkgPath
 	lockFile, err := stew.NewLockFile(stewLockFilePath, userOS, userArch)
+	stew.CatchAndExit(err)
 	sp := constants.LoadingSpinner
 	sp.Start()
 	giteaProject, err := stew.NewGiteaProject(host, owner, repo)
@@ -104,6 +174,7 @@ func handleGithub(owner, repo string, systemInfo stew.SystemInfo, userOS, userAr
 	stewBinPath := systemInfo.StewBinPath
 	stewPkgPath := systemInfo.StewPkgPath
 	lockFile, err := stew.NewLockFile(stewLockFilePath, userOS, userArch)
+	stew.CatchAndExit(err)
 	sp := constants.LoadingSpinner
 	sp.Start()
 	githubProject, err := stew.NewGithubProject(owner, repo)
