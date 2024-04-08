@@ -16,15 +16,16 @@ func getHTTPResponseBody(urlInput string, hostType string) (string, error) {
 		return "", err
 	}
 
+	fmt.Println("HELLO FUCKER", urlInput, hostType)
 	switch hostType {
 	case "github":
-		req.Header.Add("Accept", "application/octet-stream")
+		req.Header.Add("Accept", "application/json")
 		githubToken := os.Getenv("GITHUB_TOKEN")
 		if githubToken != "" {
 			req.Header.Add("Authorization", fmt.Sprintf("token %v", githubToken))
 		}
 	case "gitlab":
-		req.Header.Add("Accept", "application/octet-stream")
+		req.Header.Add("Accept", "application/json")
 		parsedUrl, err := url.Parse(urlInput)
 		CatchAndExit(err)
 		host := parsedUrl.Host
@@ -35,7 +36,7 @@ func getHTTPResponseBody(urlInput string, hostType string) (string, error) {
 			req.Header.Add("Authorization", fmt.Sprintf("Bearer %v", giteaToken))
 		}
 	case "gitea":
-		req.Header.Add("Accept", "application/octet-stream")
+		req.Header.Add("Accept", "application/json")
 		parsedUrl, err := url.Parse(urlInput)
 		CatchAndExit(err)
 		host := parsedUrl.Host

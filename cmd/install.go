@@ -12,6 +12,7 @@ import (
 
 // Install is executed when you run `stew install`
 func Install(host, hostType string, cliInputs []string) {
+	fmt.Println(host, hostType, cliInputs)
 	var err error
 
 	userOS, userArch, _, systemInfo, err := stew.Initialize()
@@ -54,6 +55,19 @@ func Install(host, hostType string, cliInputs []string) {
 				switch packageData.Source {
 				case "other":
 					Install("", "", []string{packageData.URL})
+				case "gitlab":
+					groupString := ""
+					for _, group := range packageData.Groups {
+						groupString += group + "/"
+					}
+					groupString = strings.TrimSuffix(groupString, "/")
+					Install(
+						host,
+						"gitlab",
+						[]string{
+							groupString + "/" + packageData.Repo + "@" + packageData.Tag + "#" + packageData.Asset,
+						},
+					)
 				case "gitea":
 					Install(
 						packageData.Host,

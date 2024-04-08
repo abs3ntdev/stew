@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -20,14 +21,15 @@ type LockFile struct {
 
 // PackageData contains the information for an installed binary
 type PackageData struct {
-	Source string `json:"source"`
-	Owner  string `json:"owner"`
-	Repo   string `json:"repo"`
-	Tag    string `json:"tag"`
-	Asset  string `json:"asset"`
-	Binary string `json:"binary"`
-	URL    string `json:"url"`
-	Host   string `json:"host"`
+	Source string   `json:"source"`
+	Owner  string   `json:"owner"`
+	Repo   string   `json:"repo"`
+	Tag    string   `json:"tag"`
+	Asset  string   `json:"asset"`
+	Binary string   `json:"binary"`
+	URL    string   `json:"url"`
+	Groups []string `json:"groups"`
+	Host   string   `json:"host"`
 }
 
 func readLockFileJSON(lockFilePath string) (LockFile, error) {
@@ -107,11 +109,20 @@ func ReadStewfileContents(stewfilePath string) ([]PackageData, error) {
 			continue
 		}
 		splitInput := strings.Split(packageString, "@")
-		owner := strings.Split(splitInput[0], "/")[0]
-		repo := strings.Split(splitInput[0], "/")[1]
+		groups := []string{}
+		owner := ""
+		repo := ""
+		if len(strings.Split(splitInput[0], "/")) > 2 {
+			groups = strings.Split(path.Dir(splitInput[0]), "/")
+			repo = path.Base(splitInput[0])
+		} else {
+			owner = strings.Split(splitInput[0], "/")[0]
+			repo = strings.Split(splitInput[0], "/")[1]
+		}
 		p := PackageData{
-			Repo:  repo,
-			Owner: owner,
+			Repo:   repo,
+			Owner:  owner,
+			Groups: groups,
 		}
 		if len(splitInput) == 2 {
 			tagAndAsset := strings.Split(splitInput[1], "#")
