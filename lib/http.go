@@ -16,7 +16,6 @@ func getHTTPResponseBody(urlInput string, hostType string) (string, error) {
 		return "", err
 	}
 
-	fmt.Println("HELLO FUCKER", urlInput, hostType)
 	switch hostType {
 	case "github":
 		req.Header.Add("Accept", "application/json")
