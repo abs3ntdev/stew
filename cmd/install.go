@@ -34,6 +34,14 @@ func Install(host, hostType string, cliInputs []string) {
 							packageData.Owner + "/" + packageData.Repo + "@" + packageData.Tag + "#" + packageData.Asset,
 						},
 					)
+				case "gitlab":
+					Install(
+						packageData.Host,
+						"gitlab",
+						[]string{
+							packageData.Owner + "/" + packageData.Repo + "@" + packageData.Tag + "#" + packageData.Asset,
+						},
+					)
 				default:
 					Install(
 						"",
